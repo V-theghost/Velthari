@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Velthari — The Silver Tongue</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body, #root { background: #13100c; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const style = `
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body, #root { background: #13100c; }
+  .vt-root { background: #13100c; color: #e8dcc8; font-family: 'Spectral', serif; min-height: 100vh; position: relative; overflow-x: hidden; }
+  .vt-noise { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 200px; opacity: 0.5; }
+  .vt-ornament-line { display: flex; align-items: center; gap: 12px; color: #8a6e3e; font-size: 18px; letter-spacing: 6px; margin: 0 auto; }
+  .vt-ornament-line::before, .vt-ornament-line::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #8a6e3e, transparent); }
+  .vt-hero { position: relative; z-index: 1; text-align: center; padding: 72px 24px 48px; border-bottom: 1px solid #2a2318; background: radial-gradient(ellipse at 50% 0%, #1f1a12 0%, transparent 70%); }
+  .vt-supertitle { font-family: 'IM Fell English', serif; font-size: 11px; letter-spacing: 5px; text-transform: uppercase; color: #8a6e3e; margin-bottom: 20px; }
+  .vt-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(64px, 12vw, 120px); font-weight: 300; line-height: 0.9; color: #f0e2c8; letter-spacing: -2px; margin-bottom: 6px; text-shadow: 0 0 80px rgba(180,130,50,0.15); }
+  .vt-title em { font-style: italic; color: #c9922e; }
+  .vt-subtitle { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 300; font-style: italic; color: #9a8a6e; margin: 16px 0 32px; letter-spacing: 1px; }
+  .vt-tagline { font-family: 'Spectral', serif; font-size: 13px; color: #6e5e44; max-width: 480px; margin: 0 auto; line-height: 1.8; font-style: italic; }
+  .vt-nav { position: sticky; top: 0; z-index: 100; background: rgba(19,16,12,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #2a2318; display: flex; justify-content: center; padding: 0 24px; overflow-x: auto; }
+  .vt-nav-btn { background: none; border: none; cursor: pointer; font-family: 'IM Fell English', serif; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #5e4e34; padding: 16px 20px; transition: color 0.2s; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .vt-nav-btn:hover { color: #c9922e; }
+  .vt-nav-btn.active { color: #c9922e; border-bottom-color: #c9922e; }
+  .vt-content { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 64px 24px; }
+  .vt-section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 6vw, 56px); font-weight: 300; color: #f0e2c8; margin-bottom: 8px; line-height: 1; }
+  .vt-section-title em { color: #c9922e; font-style: italic; }
+  .vt-section-desc { font-size: 14px; color: #7a6a50; font-style: italic; margin-bottom: 48px; padding-bottom: 24px; border-bottom: 1px solid #1e1a14; }
+  .vt-prose { font-size: 15px; line-height: 1.9; color: #c8b898; margin-bottom: 28px; }
+  .vt-prose strong { color: #e8d8b8; font-weight: 500; }
+  .vt-prose em { color: #c9922e; font-style: italic; }
+  .vt-h3 { font-family: 'IM Fell English', serif; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: #8a6e3e; margin: 40px 0 16px; }
+  .vt-phoneme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-bottom: 32px; }
+  .vt-phoneme-card { background: #1a1610; border: 1px solid #2a2318; border-radius: 4px; padding: 12px 10px; text-align: center; transition: border-color 0.2s, background 0.2s; }
+  .vt-phoneme-card:hover { border-color: #6a4e28; background: #1e1a14; }
+  .vt-phoneme-sym { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #c9922e; display: block; margin-bottom: 4px; }
+  .vt-phoneme-ipa { font-size: 10px; color: #5e4e34; font-family: 'Spectral', serif; }
+  .vt-rule-block { background: #171410; border-left: 3px solid #c9922e; border-radius: 0 4px 4px 0; padding: 16px 20px; margin-bottom: 14px; }
+  .vt-rule-label { font-family: 'IM Fell English', serif; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #c9922e; margin-bottom: 6px; }
+  .vt-rule-text { font-size: 14px; color: #b8a888; line-height: 1.7; }
+  .vt-rule-example { margin-top: 8px; font-style: italic; color: #7a6a50; font-size: 13px; }
+  .vt-paradigm-table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 14px; }
+  .vt-paradigm-table th { font-family: 'IM Fell English', serif; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #8a6e3e; text-align: left; padding: 10px 14px; border-bottom: 1px solid #2a2318; }
+  .vt-paradigm-table td { padding: 10px 14px; border-bottom: 1px solid #1a1610; color: #c8b898; vertical-align: top; }
+  .vt-paradigm-table tr:hover td { background: #181410; }
+  .vt-velthari { color: #c9922e; font-style: italic; }
+  .vt-gloss { color: #5e4e34; font-size: 12px; }
+  .vt-lex-controls { margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .vt-lexicon-search { background: #1a1610; border: 1px solid #2a2318; border-radius: 4px; padding: 12px 16px; font-family: 'Spectral', serif; font-size: 14px; color: #e8d8b8; width: 100%; outline: none; transition: border-color 0.2s; }
+  .vt-lexicon-search:focus { border-color: #6a4e28; }
+  .vt-lexicon-search::placeholder { color: #3e3020; }
+  .vt-lex-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .vt-lex-filter { background: #1a1610; border: 1px solid #2a2318; border-radius: 3px; padding: 6px 14px; font-family: 'IM Fell English', serif; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #5e4e34; cursor: pointer; transition: all 0.2s; }
+  .vt-lex-filter:hover { border-color: #6a4e28; color: #9a7e4e; }
+  .vt-lex-filter.active { border-color: #c9922e; color: #c9922e; background: #1e1a12; }
+  .vt-lex-count { font-size: 12px; color: #4e3e24; font-style: italic; align-self: flex-end; }
+  .vt-lex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .vt-lex-card { background: #171410; border: 1px solid #201c16; border-radius: 4px; padding: 14px 16px; transition: border-color 0.2s, background 0.2s; }
+  .vt-lex-card:hover { border-color: #3a3020; background: #1a1710; }
+  .vt-lex-card.derived { border-color: #1a1c18; background: #141310; }
+  .vt-lex-card.derived:hover { border-color: #2a3020; }
+  .vt-lex-word { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #c9922e; font-style: italic; font-weight: 400; margin-bottom: 2px; }
+  .vt-lex-card.derived .vt-lex-word { color: #9a7240; }
+  .vt-lex-pos { font-family: 'IM Fell English', serif; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #4e3e24; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+  .vt-lex-def { font-size: 13px; color: #8a7a60; line-height: 1.5; }
+  .vt-lex-ipa { font-size: 11px; color: #4e3e24; margin-top: 3px; }
+  .vt-derived-badge { background: #1e2018; border: 1px solid #2a3020; border-radius: 2px; padding: 1px 5px; font-size: 8px; color: #5a7050; letter-spacing: 1px; text-transform: uppercase; }
+  .vt-derived-source { font-size: 11px; color: #3e4030; margin-top: 4px; font-style: italic; }
+  .vt-sample-block { background: #171410; border: 1px solid #2a2318; border-radius: 6px; padding: 28px 32px; margin-bottom: 20px; }
+  .vt-sample-velthari { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-style: italic; color: #c9922e; line-height: 1.5; margin-bottom: 6px; }
+  .vt-sample-gloss { font-size: 11px; color: #4e3e24; letter-spacing: 2px; margin-bottom: 10px; font-family: 'IM Fell English', serif; }
+  .vt-sample-trans { font-size: 14px; color: #8a7a60; font-style: italic; border-top: 1px solid #1e1a14; padding-top: 10px; margin-top: 10px; }
+  .vt-deriv-rule { background: #171410; border: 1px solid #2a2318; border-radius: 4px; padding: 20px 24px; margin-bottom: 14px; }
+  .vt-deriv-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+  .vt-deriv-suffix { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #c9922e; font-style: italic; }
+  .vt-deriv-label { font-family: 'IM Fell English', serif; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #8a6e3e; }
+  .vt-deriv-arrow { font-size: 11px; color: #4e3e24; }
+  .vt-deriv-desc { font-size: 14px; color: #b8a888; line-height: 1.7; margin-bottom: 6px; }
+  .vt-deriv-example { font-style: italic; color: #7a6a50; font-size: 13px; }
+  .vt-footer { position: relative; z-index: 1; text-align: center; padding: 48px 24px; border-top: 1px solid #1a1610; color: #3e3020; font-size: 12px; font-style: italic; letter-spacing: 1px; }
+  @media (max-width: 600px) { .vt-nav { justify-content: flex-start; } .vt-nav-btn { font-size: 10px; padding: 14px 12px; } .vt-content { padding: 40px 16px; } }
+`;
+
+// ── PHONOLOGY ────────────────────────────────────────────────────────────────
+
+const PHONOLOGY = {
+  consonants: [
+    { sym: "v", ipa: "/v/" }, { sym: "l", ipa: "/l/" }, { sym: "t", ipa: "/t/" },
+    { sym: "d", ipa: "/d/" }, { sym: "h", ipa: "/h/" }, { sym: "r", ipa: "/r/" },
+    { sym: "n", ipa: "/n/" }, { sym: "s", ipa: "/s/" }, { sym: "k", ipa: "/k/" },
+    { sym: "m", ipa: "/m/" }, { sym: "p", ipa: "/p/" }, { sym: "z", ipa: "/z/" },
+    { sym: "ch", ipa: "/tʃ/" }, { sym: "th", ipa: "/θ/" }, { sym: "sh", ipa: "/ʃ/" },
+  ],
+  vowels: [
+    { sym: "a", ipa: "/a/" }, { sym: "e", ipa: "/ɛ/" }, { sym: "i", ipa: "/i/" },
+    { sym: "o", ipa: "/o/" }, { sym: "u", ipa: "/u/" },
+    { sym: "ei", ipa: "/ɛɪ/" }, { sym: "au", ipa: "/aʊ/" },
+  ],
+};
+
+// ── GRAMMAR RULES ────────────────────────────────────────────────────────────
+
+const GRAMMAR_RULES = [
+  { label: "Word Order", text: "Velthari follows VSO order: Verb → Subject → Object. Locative adjuncts (phrases ending in -vel or beginning with en) may appear immediately after the verb and before the subject — the canonical position for scene-setting location phrases.", example: "Ve-helu kireth-vel kalun oran. — PRES-be shadow-LOC spirit true — A true spirit dwells in the shadow." },
+  { label: "Tense Prefixes", text: "Tense is marked by a prefix on the verb: na- (past), ve- (present), ku- (future). Unmarked verbs are imperatives.", example: "na-tan sol / ve-tan sol / ku-tan sol — he spoke / he speaks / he will speak" },
+  { label: "Plural", text: "Nouns take the suffix -an to form the plural.", example: "oru → oru-an (person → people),  kenu → kenu-an (bird → birds)" },
+  { label: "Genitive", text: "Possession is marked by the suffix -shi on the possessor (the one who owns). It attaches to the owner, not the thing owned.", example: "horu mi-shi — home (I-GEN) — my home.  reth sol-shi — name (he-GEN) — his name." },
+  { label: "Locative", text: "The bound suffix -vel attaches to nouns to mark location ('in/at/on'). For pronouns or phrases that cannot take a suffix, use the free particle en instead.", example: "horu-vel — at home;  runa-vel — in the river;  en mi — near me (pronoun, can't take -vel)" },
+  { label: "Negation", text: "The particle oth precedes the verb to negate a clause.", example: "Oth ve-keth mi vethu. — I do not see the moon." },
+  { label: "Adjectives", text: "Adjectives follow the nouns they modify and agree in number by also taking -an in the plural. When a noun bears -vel or other suffixes, the adjective follows the fully-suffixed noun and does not repeat the suffix.", example: "oru venu — good person;  oru-an venu-an — good people;  horu-vel venu — at the good home" },
+  { label: "Ditransitive Verbs", text: "Verbs with two objects (e.g. 'give X to Y') use the particle ash before the indirect object. Word order: VERB — SUBJECT — ash INDIRECT.OBJ — DIRECT.OBJ.", example: "Na-ros miru mi-shi ash mi perath. — My friend gave a gift to me." },
+  { label: "Pronoun Plurals", text: "Pronouns form plurals identically to nouns, via the suffix -an. This is a regular, productive rule — no suppletive forms.", example: "mi → mian (I → we),  thu → thuan (you → y'all),  sol → solan (he/she → they)" },
+  { label: "Yes/No Questions", text: "Add the particle sevi at the end of any declarative clause to form a yes/no question. Nothing else in the sentence changes.", example: "Ve-keth mi solir sevi? — Do I see the sun?  Ve-cha thu mi sevi? — Do you love me?" },
+  { label: "Content Questions", text: "Interrogative words (sethun what, orush who, navesh where, velush when) move to clause-initial position, before the verb, regardless of the grammatical role they fill. They do not remain in-situ — even a subject interrogative fronts past the verb.", example: "Sethun ve-ros sol ash thu? — What is he giving to you?  Orush na-lau rav ashen? — Who came from the sea?" },
+  { label: "Aspect", text: "Velthari does not grammatically mark aspect. Tense prefixes encode only when an event occurs, not its internal structure. The distinction between 'I ate' and 'I was eating' is left to context or temporal adverbs such as velun (moment) or nalu (night).", example: "na-mar mi — I ate / I was eating (context disambiguates)" },
+  { label: "Numbers: Teens (11–19)", text: "Prefix laurn- to the unit: laurn-[unit]. Read as a single compound word.", example: "laurn-ven = 11,  laurn-thos = 12,  laurn-kirav = 15,  laurn-sorin = 19" },
+  { label: "Numbers: Tens (20, 30…)", text: "Prefix a multiplier to laurn: [unit]-laurn. In compound number words, stress falls on the first element (the multiplier) — an exception to the general penultimate rule.", example: "thos-laurn = 20,  roth-laurn = 30,  shev-laurn = 40,  kirav-laurn = 50" },
+  { label: "Numbers: Compound (21, 35…)", text: "Stack tens and units: [unit]-laurn-[unit]. The tens block always precedes the units.", example: "thos-laurn-ven = 21,  roth-laurn-kirav = 35,  kirav-laurn-azel = 56" },
+  { label: "Numbers: Hundreds & Thousands", text: "100 is elurn; 1000 is shaurn. They combine with multipliers identically to laurn.", example: "thos-elurn = 200,  roth-shaurn = 3000,  ven-elurn thos-laurn-roth = 123" },
+];
+
+// ── PRONOUNS ─────────────────────────────────────────────────────────────────
+
+const PRONOUNS = [
+  ["mi", "I / me", "/mi/"], ["thu", "you (singular)", "/θu/"],
+  ["sol", "he / she / it", "/sol/"], ["mian", "we / us", "/mi.an/"],
+  ["thuan", "you (plural)", "/θu.an/"], ["solan", "they / them", "/so.lan/"],
+];
+
+// ── DERIVATION RULES ──────────────────────────────────────────────────────────
+
+const DERIV_RULES = [
+  {
+    id: "or", suffix: "-or", inputPos: "verb", outputPos: "noun",
+    label: "Agentive Noun", arrow: "verb → noun",
+    desc: "One who habitually performs the action. Drop the final vowel of the verb stem (if present) before adding -or.",
+    example: "tan → tanor (speaker, orator),  keth → kethor (seer, lookout),  zelav → zelavor (singer)",
+    form: w => w.replace(/[aeiou]$/, "") + "or",
+    gloss: def => { const c = def.split(",")[0].replace(/^to /, "").trim(); return `one who ${c}s`; },
+  },
+  {
+    id: "im", suffix: "-im", inputPos: "verb", outputPos: "noun",
+    label: "Action Noun", arrow: "verb → noun",
+    desc: "The act or instance of performing the action. Appended directly to the verb stem.",
+    example: "tan → tanim (utterance, a saying),  nor → norim (a thought),  zeleth → zelethim (a dream)",
+    form: w => w + "im",
+    gloss: def => { const c = def.split(",")[0].replace(/^to /, "").trim(); return `the act of ${c}ing`; },
+  },
+  {
+    id: "esh", suffix: "-esh", inputPos: "noun", outputPos: "adj",
+    label: "Relational Adjective", arrow: "noun → adj",
+    desc: "Of, relating to, or characteristic of the noun. Appended directly.",
+    example: "ashen → ashenesh (oceanic, maritime),  solir → soliresh (solar),  zelun → zelunesh (musical)",
+    form: w => w + "esh",
+    gloss: def => `of or relating to ${def.split(",")[0].trim()}`,
+  },
+  {
+    id: "ath", suffix: "-ath", inputPos: "adj", outputPos: "noun",
+    label: "Abstract Noun", arrow: "adj → noun",
+    desc: "The quality or state of being the adjective. Appended directly.",
+    example: "venu → venuath (goodness, virtue),  sireth → sirethath (beauty),  lenur → lenurath (silence)",
+    form: w => w + "ath",
+    gloss: def => `the quality of being ${def.split(",")[0].trim()}`,
+  },
+  {
+    id: "in", suffix: "-in", inputPos: "noun", outputPos: "adj",
+    label: "Characterizing Adjective", arrow: "noun → adj",
+    desc: "Full of, marked by, or prone to the noun. Appended directly. Not applied to nouns already ending in -in.",
+    example: "semath → semathin (dreamlike),  kireth → kirethin (shadowy),  kaur → kaurin (fiery)",
+    form: w => w + "in",
+    gloss: def => `full of or marked by ${def.split(",")[0].trim()}`,
+    filter: w => !w.endsWith("in"),
+  },
+  {
+    id: "av", suffix: "-av", inputPos: "noun", outputPos: "verb",
+    label: "Denominal Verb", arrow: "noun → verb",
+    desc: "To work with, practice, or engage in the noun. Appended directly. Not applied to nouns already ending in -av.",
+    example: "zelun → zelunav (to make music),  lether → lethrav? No: lether → letherав → lethеrav (to read/write),  mirel → mirelav (to long, to ache)",
+    form: w => w + "av",
+    gloss: def => `to work with or practice ${def.split(",")[0].trim()}`,
+    filter: w => !w.endsWith("av"),
+  },
+];
+
+// ── BASE LEXICON (215 words) ──────────────────────────────────────────────────
+
+const LEXICON = [
+  // ── VERBS (49) ──
+  { word: "tan",    pos: "verb", def: "to speak, to say",                       ipa: "/tan/" },
+  { word: "zelav",  pos: "verb", def: "to sing",                                ipa: "/zɛ.lav/" },
+  { word: "nav",    pos: "verb", def: "to go, to travel (away)",                ipa: "/nav/" },
+  { word: "lau",    pos: "verb", def: "to come, to arrive",                     ipa: "/laʊ/" },
+  { word: "keth",   pos: "verb", def: "to see",                                 ipa: "/kɛθ/" },
+  { word: "ros",    pos: "verb", def: "to give",                                ipa: "/ros/" },
+  { word: "mar",    pos: "verb", def: "to eat",                                 ipa: "/mar/" },
+  { word: "zin",    pos: "verb", def: "to know",                                ipa: "/zin/" },
+  { word: "helu",   pos: "verb", def: "to be, to exist",                        ipa: "/hɛ.lu/" },
+  { word: "pir",    pos: "verb", def: "to make, to create",                     ipa: "/pir/" },
+  { word: "thav",   pos: "verb", def: "to take, to hold",                       ipa: "/θav/" },
+  { word: "sem",    pos: "verb", def: "to want, to desire",                     ipa: "/sɛm/" },
+  { word: "nor",    pos: "verb", def: "to think",                               ipa: "/nor/" },
+  { word: "cha",    pos: "verb", def: "to love",                                ipa: "/tʃa/" },
+  { word: "sel",    pos: "verb", def: "to hear",                                ipa: "/sɛl/" },
+  { word: "ruth",   pos: "verb", def: "to find, to discover",                   ipa: "/ruθ/" },
+  { word: "vos",    pos: "verb", def: "to open",                                ipa: "/vos/" },
+  { word: "miv",    pos: "verb", def: "to close",                               ipa: "/miv/" },
+  { word: "kiru",   pos: "verb", def: "to sleep, to rest",                      ipa: "/ki.ru/" },
+  { word: "sau",    pos: "verb", def: "to live",                                ipa: "/saʊ/" },
+  { word: "thal",   pos: "verb", def: "to die, to end",                         ipa: "/θal/" },
+  { word: "zeth",   pos: "verb", def: "to write",                               ipa: "/zɛθ/" },
+  { word: "milov",  pos: "verb", def: "to remember",                            ipa: "/mi.lov/" },
+  { word: "pelav",  pos: "verb", def: "to celebrate, to feast",                 ipa: "/pɛ.lav/" },
+  { word: "ashev",  pos: "verb", def: "to sail, to navigate at sea",            ipa: "/a.ʃɛv/" },
+  { word: "veneth", pos: "verb", def: "to begin, to start",                     ipa: "/vɛ.nɛθ/" },
+  { word: "thalev", pos: "verb", def: "to finish, to complete",                 ipa: "/θa.lɛv/" },
+  { word: "shirev", pos: "verb", def: "to break, to shatter",                   ipa: "/ʃi.rɛv/" },
+  { word: "loveth", pos: "verb", def: "to choose, to decide",                   ipa: "/lo.vɛθ/" },
+  { word: "methiv", pos: "verb", def: "to diminish, to shrink",                 ipa: "/mɛ.θiv/" },
+  { word: "parev",  pos: "verb", def: "to hide, to conceal",                    ipa: "/pa.rɛv/" },
+  { word: "zeleth", pos: "verb", def: "to dream",                               ipa: "/zɛ.lɛθ/" },
+  { word: "kethuv", pos: "verb", def: "to show, to reveal",                     ipa: "/kɛ.θuv/" },
+  { word: "remath", pos: "verb", def: "to fear, to dread",                      ipa: "/rɛ.maθ/" },
+  { word: "shorev", pos: "verb", def: "to trade, to exchange",                  ipa: "/ʃo.rɛv/" },
+  { word: "thenov", pos: "verb", def: "to wait, to remain",                     ipa: "/θɛ.nov/" },
+  { word: "mirev",  pos: "verb", def: "to weep, to mourn",                      ipa: "/mi.rɛv/" },
+  { word: "velov",  pos: "verb", def: "to shine, to gleam",                     ipa: "/vɛ.lov/" },
+  { word: "thunov", pos: "verb", def: "to gather, to collect",                  ipa: "/θu.nov/" },
+  { word: "lethuv", pos: "verb", def: "to plant, to cultivate",                 ipa: "/lɛ.θuv/" },
+  { word: "kaluv",  pos: "verb", def: "to pray, to invoke",                     ipa: "/ka.luv/" },
+  { word: "rethav", pos: "verb", def: "to name, to call by name",               ipa: "/rɛ.θav/" },
+  { word: "sheluv", pos: "verb", def: "to illuminate, to light up",             ipa: "/ʃɛ.luv/" },
+  { word: "venov",  pos: "verb", def: "to count, to enumerate",                 ipa: "/vɛ.nov/" },
+  { word: "shiluv", pos: "verb", def: "to whisper",                             ipa: "/ʃi.luv/" },
+  { word: "vethov", pos: "verb", def: "to change, to transform",                ipa: "/vɛ.θov/" },
+  { word: "lareth", pos: "verb", def: "to grow (intransitive)",                 ipa: "/la.rɛθ/" },
+  { word: "thaluv", pos: "verb", def: "to grasp, to clutch",                    ipa: "/θa.luv/" },
+  { word: "nolver", pos: "verb", def: "to protect, to defend",                  ipa: "/nol.vɛr/" },
+
+  // ── NOUNS (101) ──
+  { word: "solir",   pos: "noun", def: "sun",                                   ipa: "/so.lir/" },
+  { word: "vethu",   pos: "noun", def: "moon",                                  ipa: "/vɛ.θu/" },
+  { word: "tharel",  pos: "noun", def: "star",                                  ipa: "/θa.rɛl/" },
+  { word: "renu",    pos: "noun", def: "water",                                 ipa: "/rɛ.nu/" },
+  { word: "kaur",    pos: "noun", def: "fire",                                  ipa: "/kaʊr/" },
+  { word: "stiv",    pos: "noun", def: "earth, soil, ground",                   ipa: "/stiv/" },
+  { word: "aurin",   pos: "noun", def: "sky, air",                              ipa: "/aʊ.rin/" },
+  { word: "velen",   pos: "noun", def: "road, path",                            ipa: "/vɛ.lɛn/" },
+  { word: "runa",    pos: "noun", def: "river",                                 ipa: "/ru.na/" },
+  { word: "nalu",    pos: "noun", def: "night",                                 ipa: "/na.lu/" },
+  { word: "dera",    pos: "noun", def: "day, daylight",                         ipa: "/dɛ.ra/" },
+  { word: "voren",   pos: "noun", def: "wind",                                  ipa: "/vo.rɛn/" },
+  { word: "ashen",   pos: "noun", def: "sea, ocean",                            ipa: "/a.ʃɛn/" },
+  { word: "tiven",   pos: "noun", def: "tree",                                  ipa: "/ti.vɛn/" },
+  { word: "savar",   pos: "noun", def: "stone, rock",                           ipa: "/sa.var/" },
+  { word: "lethu",   pos: "noun", def: "leaf",                                  ipa: "/lɛ.θu/" },
+  { word: "thurin",  pos: "noun", def: "mountain, peak",                        ipa: "/θu.rin/" },
+  { word: "selven",  pos: "noun", def: "valley, lowland",                       ipa: "/sɛl.vɛn/" },
+  { word: "lethin",  pos: "noun", def: "forest, woodland",                      ipa: "/lɛ.θin/" },
+  { word: "paveth",  pos: "noun", def: "cloud",                                 ipa: "/pa.vɛθ/" },
+  { word: "vathen",  pos: "noun", def: "storm",                                 ipa: "/va.θɛn/" },
+  { word: "thivas",  pos: "noun", def: "shore, coast",                          ipa: "/θi.vas/" },
+  { word: "zerath",  pos: "noun", def: "dust, ash",                             ipa: "/zɛ.raθ/" },
+  { word: "shalin",  pos: "noun", def: "ice, frost",                            ipa: "/ʃa.lin/" },
+  { word: "peluth",  pos: "noun", def: "spring, well (water source)",           ipa: "/pɛ.luθ/" },
+  { word: "theveth", pos: "noun", def: "swamp, marsh",                          ipa: "/θɛ.vɛθ/" },
+  { word: "shorel",  pos: "noun", def: "sand",                                  ipa: "/ʃo.rɛl/" },
+  { word: "veleth",  pos: "noun", def: "field, plain",                          ipa: "/vɛ.lɛθ/" },
+  { word: "kaveth",  pos: "noun", def: "desert, dry land",                      ipa: "/ka.vɛθ/" },
+  { word: "thirev",  pos: "noun", def: "flame, individual fire",                ipa: "/θi.rɛv/" },
+  { word: "thaler",  pos: "noun", def: "hand",                                  ipa: "/θa.lɛr/" },
+  { word: "norev",   pos: "noun", def: "head",                                  ipa: "/no.rɛv/" },
+  { word: "seler",   pos: "noun", def: "eye",                                   ipa: "/sɛ.lɛr/" },
+  { word: "chiren",  pos: "noun", def: "mouth",                                 ipa: "/tʃi.rɛn/" },
+  { word: "shelen",  pos: "noun", def: "ear",                                   ipa: "/ʃɛ.lɛn/" },
+  { word: "kirev",   pos: "noun", def: "nose",                                  ipa: "/ki.rɛv/" },
+  { word: "thovel",  pos: "noun", def: "foot, leg",                             ipa: "/θo.vɛl/" },
+  { word: "rovel",   pos: "noun", def: "back, spine",                           ipa: "/ro.vɛl/" },
+  { word: "reneth",  pos: "noun", def: "blood",                                 ipa: "/rɛ.nɛθ/" },
+  { word: "renvel",  pos: "noun", def: "bone",                                  ipa: "/rɛn.vɛl/" },
+  { word: "shelev",  pos: "noun", def: "skin, hide",                            ipa: "/ʃɛ.lɛv/" },
+  { word: "thuven",  pos: "noun", def: "chest, torso",                          ipa: "/θu.vɛn/" },
+  { word: "rethel",  pos: "noun", def: "face",                                  ipa: "/rɛ.θɛl/" },
+  { word: "charev",  pos: "noun", def: "finger",                                ipa: "/tʃa.rɛv/" },
+  { word: "kenu",    pos: "noun", def: "bird",                                  ipa: "/kɛ.nu/" },
+  { word: "saveth",  pos: "noun", def: "fish",                                  ipa: "/sa.vɛθ/" },
+  { word: "thimen",  pos: "noun", def: "wolf",                                  ipa: "/θi.mɛn/" },
+  { word: "velith",  pos: "noun", def: "serpent, snake",                        ipa: "/vɛ.liθ/" },
+  { word: "vorath",  pos: "noun", def: "deer",                                  ipa: "/vo.raθ/" },
+  { word: "pether",  pos: "noun", def: "horse",                                 ipa: "/pɛ.θɛr/" },
+  { word: "shevim",  pos: "noun", def: "insect",                                ipa: "/ʃɛ.vim/" },
+  { word: "aurath",  pos: "noun", def: "eagle, large bird of prey",             ipa: "/aʊ.raθ/" },
+  { word: "mithen",  pos: "noun", def: "cat",                                   ipa: "/mi.θɛn/" },
+  { word: "shoveth", pos: "noun", def: "ox, cattle",                            ipa: "/ʃo.vɛθ/" },
+  { word: "rethiv",  pos: "noun", def: "hare, rabbit",                          ipa: "/rɛ.θiv/" },
+  { word: "velun",   pos: "noun", def: "moment, time",                          ipa: "/vɛ.lun/" },
+  { word: "velath",  pos: "noun", def: "age, era",                              ipa: "/vɛ.laθ/" },
+  { word: "thiravel",pos: "noun", def: "season",                                ipa: "/θi.ra.vɛl/" },
+  { word: "noruvel", pos: "noun", def: "dawn",                                  ipa: "/no.ru.vɛl/" },
+  { word: "shalem",  pos: "noun", def: "dusk, twilight",                        ipa: "/ʃa.lɛm/" },
+  { word: "vorim",   pos: "noun", def: "year",                                  ipa: "/vo.rim/" },
+  { word: "thelav",  pos: "noun", def: "the past",                              ipa: "/θɛ.lav/" },
+  { word: "naveth",  pos: "noun", def: "the future",                            ipa: "/na.vɛθ/" },
+  { word: "thelov",  pos: "noun", def: "the present",                           ipa: "/θɛ.lov/" },
+  { word: "oru",     pos: "noun", def: "person, human",                         ipa: "/o.ru/" },
+  { word: "virem",   pos: "noun", def: "child",                                 ipa: "/vi.rɛm/" },
+  { word: "halun",   pos: "noun", def: "leader, chief",                         ipa: "/ha.lun/" },
+  { word: "miru",    pos: "noun", def: "friend, companion",                     ipa: "/mi.ru/" },
+  { word: "thoven",  pos: "noun", def: "enemy, rival",                          ipa: "/θo.vɛn/" },
+  { word: "noruven", pos: "noun", def: "elder, respected one",                  ipa: "/no.ru.vɛn/" },
+  { word: "vireth",  pos: "noun", def: "youth, young person",                   ipa: "/vi.rɛθ/" },
+  { word: "shavin",  pos: "noun", def: "family, kin group",                     ipa: "/ʃa.vin/" },
+  { word: "pelveth", pos: "noun", def: "feast, celebration",                    ipa: "/pɛl.vɛθ/" },
+  { word: "selveth", pos: "noun", def: "council, assembly",                     ipa: "/sɛl.vɛθ/" },
+  { word: "thaveth", pos: "noun", def: "wealth, possessions",                   ipa: "/θa.vɛθ/" },
+  { word: "rosveth", pos: "noun", def: "charity, generosity",                   ipa: "/ros.vɛθ/" },
+  { word: "mithuvel",pos: "noun", def: "oath, vow",                             ipa: "/mi.θu.vɛl/" },
+  { word: "sheleven",pos: "noun", def: "law, custom",                           ipa: "/ʃɛ.lɛ.vɛn/" },
+  { word: "kalveth", pos: "noun", def: "temple, sacred place",                  ipa: "/kal.vɛθ/" },
+  { word: "thalveth",pos: "noun", def: "grave, burial site",                    ipa: "/θal.vɛθ/" },
+  { word: "thivurel",pos: "noun", def: "ship, vessel",                          ipa: "/θi.vu.rɛl/" },
+  { word: "seval",   pos: "noun", def: "word, language",                        ipa: "/sɛ.val/" },
+  { word: "lether",  pos: "noun", def: "book, writing",                         ipa: "/lɛ.θɛr/" },
+  { word: "zelun",   pos: "noun", def: "song, music",                           ipa: "/zɛ.lun/" },
+  { word: "semath",  pos: "noun", def: "dream",                                 ipa: "/sɛ.maθ/" },
+  { word: "zinvel",  pos: "noun", def: "mind, intellect",                       ipa: "/zin.vɛl/" },
+  { word: "reth",    pos: "noun", def: "name",                                  ipa: "/rɛθ/" },
+  { word: "korum",   pos: "noun", def: "food, meal",                            ipa: "/ko.rum/" },
+  { word: "pal",     pos: "noun", def: "door, gate",                            ipa: "/pal/" },
+  { word: "horu",    pos: "noun", def: "home, dwelling",                        ipa: "/ho.ru/" },
+  { word: "mirel",   pos: "noun", def: "heart; the ache of longing for a place one has never been", ipa: "/mi.rɛl/" },
+  { word: "kalun",   pos: "noun", def: "spirit, god",                           ipa: "/ka.lun/" },
+  { word: "kireth",  pos: "noun", def: "shadow, darkness",                      ipa: "/ki.rɛθ/" },
+  { word: "perath",  pos: "noun", def: "gift, offering",                        ipa: "/pɛ.raθ/" },
+  { word: "thiru",   pos: "noun", def: "journey, voyage",                       ipa: "/θi.ru/" },
+  { word: "mireth",  pos: "noun", def: "grief, sorrow",                         ipa: "/mi.rɛθ/" },
+  { word: "chaveth", pos: "noun", def: "joy, happiness",                        ipa: "/tʃa.vɛθ/" },
+  { word: "semavel", pos: "noun", def: "hope",                                  ipa: "/sɛ.ma.vɛl/" },
+  { word: "zinevel", pos: "noun", def: "wisdom",                                ipa: "/zi.nɛ.vɛl/" },
+  { word: "thenev",  pos: "noun", def: "doubt, uncertainty",                    ipa: "/θɛ.nɛv/" },
+  { word: "ruthuvel",pos: "noun", def: "wonder, awe",                           ipa: "/ru.θu.vɛl/" },
+  { word: "peluveth",pos: "noun", def: "gratitude",                             ipa: "/pɛ.lu.vɛθ/" },
+  { word: "kauveth", pos: "noun", def: "anger, rage",                           ipa: "/kaʊ.vɛθ/" },
+  { word: "thari",   pos: "noun", def: "(archaic) tongue, utterance — as in vel-thari, 'the silver tongue'", ipa: "/θa.ri/" },
+  { word: "vel",     pos: "noun", def: "(archaic) silver, precious — survives only in the compound velthari and as the root of the locative suffix -vel. The grammaticalization pathway is: 'precious' → 'close at hand' → 'near/at', a well-attested semantic drift from concrete value to spatial proximity. The particle velu shares the same opening sounds by coincidence only", ipa: "/vɛl/" },
+
+  // ── ADJECTIVES (37) ──
+  { word: "sorath",  pos: "adj", def: "great, large",                           ipa: "/so.raθ/" },
+  { word: "methis",  pos: "adj", def: "small, little",                          ipa: "/mɛ.θis/" },
+  { word: "venu",    pos: "adj", def: "good, kind",                             ipa: "/vɛ.nu/" },
+  { word: "karu",    pos: "adj", def: "bad, wicked",                            ipa: "/ka.ru/" },
+  { word: "sireth",  pos: "adj", def: "beautiful",                              ipa: "/si.rɛθ/" },
+  { word: "nauthi",  pos: "adj", def: "dark",                                   ipa: "/naʊ.θi/" },
+  { word: "revi",    pos: "adj", def: "swift, fast",                            ipa: "/rɛ.vi/" },
+  { word: "thelu",   pos: "adj", def: "slow, patient",                          ipa: "/θɛ.lu/" },
+  { word: "vethin",  pos: "adj", def: "new, fresh",                             ipa: "/vɛ.θin/" },
+  { word: "kaleth",  pos: "adj", def: "ancient, old",                           ipa: "/ka.lɛθ/" },
+  { word: "oran",    pos: "adj", def: "true, honest",                           ipa: "/o.ran/" },
+  { word: "zelveth", pos: "adj", def: "mysterious, strange",                    ipa: "/zɛl.vɛθ/" },
+  { word: "lenur",   pos: "adj", def: "quiet, silent",                          ipa: "/lɛ.nur/" },
+  { word: "hevis",   pos: "adj", def: "heavy, burdened",                        ipa: "/hɛ.vis/" },
+  { word: "shelu",   pos: "adj", def: "bright, radiant",                        ipa: "/ʃɛ.lu/" },
+  { word: "zineth",  pos: "adj", def: "wise, learned",                          ipa: "/zi.nɛθ/" },
+  { word: "laveth",  pos: "adj", def: "brave, courageous",                      ipa: "/la.vɛθ/" },
+  { word: "shovel",  pos: "adj", def: "deep, profound",                         ipa: "/ʃo.vɛl/" },
+  { word: "vethuv",  pos: "adj", def: "pale, wan",                              ipa: "/vɛ.θuv/" },
+  { word: "vathuv",  pos: "adj", def: "stormy, turbulent",                      ipa: "/va.θuv/" },
+  { word: "lethiv",  pos: "adj", def: "wild, untamed",                          ipa: "/lɛ.θiv/" },
+  { word: "sherev",  pos: "adj", def: "clear, transparent",                     ipa: "/ʃɛ.rɛv/" },
+  { word: "shelov",  pos: "adj", def: "distant, far",                           ipa: "/ʃɛ.lov/" },
+  { word: "miresh",  pos: "adj", def: "sorrowful, melancholic",                 ipa: "/mi.rɛʃ/" },
+  { word: "thuruv",  pos: "adj", def: "tall, high",                             ipa: "/θu.ruv/" },
+  { word: "lethov",  pos: "adj", def: "green, verdant",                         ipa: "/lɛ.θov/" },
+  { word: "veluv",   pos: "adj", def: "silver-colored, gleaming",               ipa: "/vɛ.luv/" },
+  { word: "zethov",  pos: "adj", def: "written, recorded",                      ipa: "/zɛ.θov/" },
+  { word: "peliv",   pos: "adj", def: "generous, giving",                       ipa: "/pɛ.liv/" },
+  { word: "sheloth", pos: "adj", def: "low, sunken",                            ipa: "/ʃɛ.loθ/" },
+  { word: "reniv",   pos: "adj", def: "blood-red, crimson",                     ipa: "/rɛ.niv/" },
+  { word: "noresh",  pos: "adj", def: "present, current",                       ipa: "/no.rɛʃ/" },
+  { word: "kalish",  pos: "adj", def: "holy, sacred",                           ipa: "/ka.liʃ/" },
+  { word: "morith",  pos: "adj", def: "mortal, dying",                          ipa: "/mo.riθ/" },
+  { word: "sauvin",  pos: "adj", def: "living, alive",                          ipa: "/saʊ.vin/" },
+  { word: "piven",   pos: "adj", def: "crafted, made by hand",                  ipa: "/pi.vɛn/" },
+  { word: "thuniv",  pos: "adj", def: "collective, gathered",                   ipa: "/θu.niv/" },
+
+  // ── PARTICLES (15) ──
+  { word: "oth",    pos: "particle", def: "not (negation)",                      ipa: "/oθ/" },
+  { word: "elu",    pos: "particle", def: "and — coordinates both noun phrases and full clauses; when joining clauses each retains its own tense-marked verb", ipa: "/ɛ.lu/" },
+  { word: "sho",    pos: "particle", def: "or",                                  ipa: "/ʃo/" },
+  { word: "pav",    pos: "particle", def: "but",                                 ipa: "/pav/" },
+  { word: "en",     pos: "particle", def: "in, at, near (free locative) — used before pronouns or phrases that cannot take the bound suffix -vel", ipa: "/ɛn/" },
+  { word: "per",    pos: "particle", def: "for, because",                        ipa: "/pɛr/" },
+  { word: "rav",    pos: "particle", def: "from, away",                          ipa: "/rav/" },
+  { word: "nov",    pos: "particle", def: "with, together",                      ipa: "/nov/" },
+  { word: "ash",    pos: "particle", def: "toward, to (motion) — also marks the indirect object in ditransitive constructions", ipa: "/aʃ/" },
+  { word: "velu",   pos: "particle", def: "also, too — the vel- opening is a coincidence of form, not shared ancestry; this particle grammaticalized from an older root meaning 'likewise,' unrelated to vel (silver) or the locative suffix -vel", ipa: "/vɛ.lu/" },
+  { word: "sevi",   pos: "particle", def: "question marker — placed clause-finally to form yes/no questions", ipa: "/sɛ.vi/" },
+  { word: "sethun", pos: "particle", def: "what? — fronted interrogative for things and facts; moves to clause-initial position regardless of the grammatical role it fills", ipa: "/sɛ.θun/" },
+  { word: "orush",  pos: "particle", def: "who? — fronted interrogative for persons; moves to clause-initial position regardless of grammatical role, filling subject or object function as appropriate", ipa: "/o.ruʃ/" },
+  { word: "navesh", pos: "particle", def: "where? — fronted interrogative for location", ipa: "/na.vɛʃ/" },
+  { word: "velush", pos: "particle", def: "when? — fronted interrogative for time", ipa: "/vɛ.luʃ/" },
+
+  // ── NUMBERS (12) ──
+  { word: "ven",    pos: "number", def: "one",                                   ipa: "/vɛn/" },
+  { word: "thos",   pos: "number", def: "two",                                   ipa: "/θos/" },
+  { word: "roth",   pos: "number", def: "three",                                 ipa: "/roθ/" },
+  { word: "shev",   pos: "number", def: "four",                                  ipa: "/ʃɛv/" },
+  { word: "kirav",  pos: "number", def: "five",                                  ipa: "/ki.rav/" },
+  { word: "azel",   pos: "number", def: "six",                                   ipa: "/a.zɛl/" },
+  { word: "thovan", pos: "number", def: "seven",                                 ipa: "/θo.van/" },
+  { word: "melsev", pos: "number", def: "eight",                                 ipa: "/mɛl.sɛv/" },
+  { word: "sorin",  pos: "number", def: "nine",                                  ipa: "/so.rin/" },
+  { word: "laurn",  pos: "number", def: "ten — base of the decimal system; preserves an archaic /rn/ coda found nowhere else in the regular lexicon", ipa: "/laʊrn/" },
+  { word: "elurn",  pos: "number", def: "hundred (100) — same archaic /rn/ coda as laurn and shaurn", ipa: "/ɛ.lurn/" },
+  { word: "shaurn", pos: "number", def: "thousand (1000) — same archaic /rn/ coda as laurn and elurn", ipa: "/ʃaʊrn/" },
+];
+
+// ── DERIVED LEXICON (computed) ────────────────────────────────────────────────
+
+const DERIVATION_EXCLUSIONS = new Set([
+  "helu-or", "helu-im", "vel-av", "thari-av", "vel-esh",
+  "thari-esh", "vel-in", "thari-in",
+]);
+
+const DERIVED_LEXICON = LEXICON
+  .filter(e => ["verb", "noun", "adj"].includes(e.pos))
+  .flatMap(entry =>
+    DERIV_RULES
+      .filter(r => r.inputPos === entry.pos)
+      .filter(r => !r.filter || r.filter(entry.word))
+      .filter(r => !DERIVATION_EXCLUSIONS.has(`${entry.word}-${r.id}`))
+      .map(r => ({
+        word: r.form(entry.word),
+        pos: r.outputPos,
+        def: r.gloss(entry.def),
+        ipa: null,
+        derivedFrom: entry.word,
+        ruleId: r.id,
+        isDerived: true,
+      }))
+  )
+  .filter(d => !LEXICON.some(b => b.word === d.word));
+
+// ── SAMPLE SENTENCES ──────────────────────────────────────────────────────────
+
+const SAMPLE_SENTENCES = [
+  { velthari: "Ve-cha mi thu.", gloss: "PRES-love I you", trans: "I love you." },
+  { velthari: "Na-lau sol rav ashen nov thiru sorath.", gloss: "PAST-come he from sea with journey great", trans: "He came from the sea on a great journey." },
+  { velthari: "Oth ve-zin mian reth sol-shi.", gloss: "NEG PRES-know we name he-GEN", trans: "We do not know his name." },
+  { velthari: "Ku-tan thu seval venu elu ku-zelav thu zelun sireth.", gloss: "FUT-speak you word good and FUT-sing you song beautiful", trans: "You will speak good words and sing beautiful songs." },
+  { velthari: "Ve-helu kireth-vel kalun oran.", gloss: "PRES-be shadow-LOC spirit true", trans: "A true spirit dwells in the shadow." },
+  { velthari: "Na-ros miru mi-shi ash mi perath vethin.", gloss: "PAST-give friend I-GEN to me gift new", trans: "My friend gave me a new gift." },
+];
+
+const POS_COLORS = {
+  verb: "#b87040", noun: "#5a8a7e", adj: "#7a6aaa",
+  particle: "#4a7a6a", number: "#8a6a4a",
+};
+
+// ── SECTIONS ──────────────────────────────────────────────────────────────────
+
+function Overview() {
+  return (
+    <div>
+      <div className="vt-section-title">Overview</div>
+      <p className="vt-section-desc">The nature and history of Velthari</p>
+      <p className="vt-prose">
+        <em>Velthari</em> — lit. <em>"the silver tongue"</em>, from archaic <em>vel</em> (silver, precious) and <em>thari</em>
+        (tongue, utterance) — is the constructed language of the Velthrin, a seafaring scholarly culture whose
+        settlements trace the coasts of a vast inland sea. Velthari is notable for its <strong>agglutinative morphology</strong>,
+        an unusual <strong>VSO word order</strong>, and a rich vocabulary drawn from the natural world.
+      </p>
+      <p className="vt-prose">
+        The language prizes <strong>precision of feeling</strong> over precision of fact. Where other languages multiply
+        tense markers, Velthari multiplies terms for emotional states. The word <em>mirel</em> means not just
+        "heart" but the particular ache of longing for a place one has never been — an untranslatable
+        compression of homesickness and desire into a single word.
+      </p>
+
+      <div className="vt-h3">Quick Reference</div>
+      <table className="vt-paradigm-table">
+        <thead><tr><th>Feature</th><th>Value</th></tr></thead>
+        <tbody>
+          {[
+            ["Word Order","VSO (Verb–Subject–Object)"],
+            ["Morphology","Agglutinative"],
+            ["Tense","Prefix on verb (na- past, ve- present, ku- future)"],
+            ["Plural","Suffix -an"],
+            ["Possession","Suffix -shi on possessor"],
+            ["Location","Suffix -vel (on nouns); free particle en (for pronouns)"],
+            ["Negation","Particle oth before verb"],
+            ["Questions","sevi clause-final (yes/no); fronted interrogative (content)"],
+            ["Adjectives","Post-nominal; agree in number; suffixes mark head noun only"],
+            ["Aspect","Not grammatically marked — context and adverbs disambiguate"],
+            ["Consonants","15"], ["Vowels","5 + 2 diphthongs (ei /ɛɪ/, au /aʊ/)"],
+            ["Base Lexicon", `${LEXICON.length} words`],
+            ["With Derivations", `${LEXICON.length + DERIVED_LEXICON.length} words`],
+          ].map(([f, v]) => (
+            <tr key={f}><td><strong>{f}</strong></td><td className="vt-velthari">{v}</td></tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="vt-h3">Sample Sentences</div>
+      {SAMPLE_SENTENCES.map((s, i) => (
+        <div key={i} className="vt-sample-block">
+          <div className="vt-sample-velthari">{s.velthari}</div>
+          <div className="vt-sample-gloss">{s.gloss}</div>
+          <div className="vt-sample-trans">"{s.trans}"</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Phonology() {
+  return (
+    <div>
+      <div className="vt-section-title">Phon<em>ology</em></div>
+      <p className="vt-section-desc">Sounds and pronunciation of Velthari</p>
+      <p className="vt-prose">
+        Velthari has a moderate phonological inventory of <strong>15 consonants</strong> and <strong>5 vowels</strong> plus two
+        diphthongs. Syllable structure follows <em>(C)V(C)</em>. Stress falls on the <strong>penultimate syllable</strong>
+        in words of two or more syllables, with the exception of compound number words, which follow first-element stress.
+      </p>
+      <p className="vt-prose">
+        The language strongly favors liquids and fricatives, giving it a flowing, sibilant quality.
+        Of the stops, only <em>/d/</em> is voiced — an asymmetry that makes it perceptually distinct
+        and limits its use to a small class of native roots. Voiced fricatives <em>/v/</em> and <em>/z/</em>
+        coexist with this pattern, a feature shared by a handful of attested natural languages.
+      </p>
+
+      <div className="vt-h3">Consonants</div>
+      <div className="vt-phoneme-grid">
+        {PHONOLOGY.consonants.map(p => (
+          <div key={p.sym} className="vt-phoneme-card">
+            <span className="vt-phoneme-sym">{p.sym}</span>
+            <span className="vt-phoneme-ipa">{p.ipa}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="vt-h3">Vowels &amp; Diphthongs</div>
+      <div className="vt-phoneme-grid">
+        {PHONOLOGY.vowels.map(p => (
+          <div key={p.sym} className="vt-phoneme-card">
+            <span className="vt-phoneme-sym">{p.sym}</span>
+            <span className="vt-phoneme-ipa">{p.ipa}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="vt-h3">Phonotactics</div>
+      {[
+        { label: "Syllable Structure", text: "(C)V(C) — onset is optional; coda allows a single nasal, liquid, or fricative. Complex codas are not permitted in regular vocabulary. Exception: the number roots laurn, elurn, and shaurn preserve an archaic /rn/ coda found nowhere else in the language — a fossilized feature that survived because numerals resist phonological leveling.", example: "vel, kaur, aurin, stiv — regular;  laurn, elurn, shaurn — archaic /rn/ exception" },
+        { label: "Consonant Clusters", text: "Only st- and initial clusters of stop+liquid are permitted at syllable onset. No complex codas in regular vocabulary.", example: "stiv /stiv/" },
+        { label: "Diphthongs", text: "ei /ɛɪ/ and au /aʊ/ are the only permitted diphthongs; they share the height of the monophthong e /ɛ/. They behave as single vowel nuclei.", example: "kaur /kaʊr/ (fire),  sau /saʊ/ (to live),  lau /laʊ/ (to come)" },
+        { label: "Stress", text: "Stress is penultimate in polysyllables. In monosyllables, stress is inherent. Exception: in compound number words, stress falls on the first element (the multiplier) rather than the penultimate syllable.", example: "VE-thu, AU-rin, SE-math — penultimate;  THOS-laurn (20), ROTH-laurn (30) — first-element stress" },
+      ].map(r => (
+        <div key={r.label} className="vt-rule-block">
+          <div className="vt-rule-label">{r.label}</div>
+          <div className="vt-rule-text">{r.text}</div>
+          <div className="vt-rule-example">e.g. {r.example}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Grammar() {
+  return (
+    <div>
+      <div className="vt-section-title">Gram<em>mar</em></div>
+      <p className="vt-section-desc">Morphology, syntax, and the structure of Velthari</p>
+      <p className="vt-prose">
+        Velthari is <strong>agglutinative</strong>: grammatical meaning is encoded by stacking affixes onto roots
+        rather than modifying the root itself. Roots remain stable, making the language learnable quickly
+        though mastery of affix order takes time.
+      </p>
+
+      <div className="vt-h3">Core Grammar Rules</div>
+      {GRAMMAR_RULES.map(r => (
+        <div key={r.label} className="vt-rule-block">
+          <div className="vt-rule-label">{r.label}</div>
+          <div className="vt-rule-text">{r.text}</div>
+          <div className="vt-rule-example">{r.example}</div>
+        </div>
+      ))}
+
+      <div className="vt-h3">Pronouns</div>
+      <table className="vt-paradigm-table">
+        <thead><tr><th>Velthari</th><th>IPA</th><th>Meaning</th></tr></thead>
+        <tbody>
+          {PRONOUNS.map(([w, m, ipa]) => (
+            <tr key={w}>
+              <td className="vt-velthari">{w}</td>
+              <td className="vt-gloss">{ipa}</td>
+              <td>{m}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="vt-h3">Verb Conjugation Pattern</div>
+      <table className="vt-paradigm-table">
+        <thead><tr><th>Tense</th><th>Prefix</th><th>Example (tan — to speak)</th><th>Translation</th></tr></thead>
+        <tbody>
+          {[
+            ["Past","na-","na-tan sol","he/she/it spoke"],
+            ["Present","ve-","ve-tan sol","he/she/it speaks"],
+            ["Future","ku-","ku-tan sol","he/she/it will speak"],
+            ["Imperative","—","tan!","speak!"],
+          ].map(([t,p,ex,tr]) => (
+            <tr key={t}>
+              <td><strong>{t}</strong></td>
+              <td className="vt-velthari">{p}</td>
+              <td className="vt-velthari">{ex}</td>
+              <td className="vt-gloss">{tr}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="vt-h3">Derivational Morphology</div>
+      <p className="vt-prose">
+        Velthari has six productive derivational suffixes that generate new words from existing roots.
+        These are not inflectional — they create new lexical entries, not grammatical variants. Derived forms
+        are fully regular and can themselves serve as bases for further derivation.
+      </p>
+      {DERIV_RULES.map(r => (
+        <div key={r.id} className="vt-deriv-rule">
+          <div className="vt-deriv-header">
+            <span className="vt-deriv-suffix">{r.suffix}</span>
+            <span className="vt-deriv-label">{r.label}</span>
+            <span className="vt-deriv-arrow">· {r.arrow}</span>
+          </div>
+          <div className="vt-deriv-desc">{r.desc}</div>
+          <div className="vt-deriv-example">{r.example}</div>
+        </div>
+      ))}
+
+      <div className="vt-h3">Affix Order on Nouns</div>
+      <div className="vt-rule-block">
+        <div className="vt-rule-label">Stacking Order</div>
+        <div className="vt-rule-text">ROOT + plural (-an) + genitive (-shi) + locative (-vel)</div>
+        <div className="vt-rule-example">
+          horu → horu-an → horu-an-shi → horu-an-shi-vel<br />
+          home → homes → (of the) homes → at (the) homes (of…)
+        </div>
+      </div>
+
+      <div className="vt-h3">Number System</div>
+      <table className="vt-paradigm-table">
+        <thead><tr><th>Number</th><th>Velthari</th><th>Structure</th></tr></thead>
+        <tbody>
+          {[
+            ["11","laurn-ven","10 + 1"],["15","laurn-kirav","10 + 5"],
+            ["20","thos-laurn","2 × 10"],["30","roth-laurn","3 × 10"],
+            ["21","thos-laurn-ven","(2×10) + 1"],["35","roth-laurn-kirav","(3×10) + 5"],
+            ["99","sorin-laurn-sorin","(9×10) + 9"],["100","elurn","root"],
+            ["200","thos-elurn","2 × 100"],["123","ven-elurn thos-laurn-roth","100 + 20 + 3"],
+            ["1000","shaurn","root"],["3500","roth-shaurn kirav-elurn","3×1000 + 5×100"],
+          ].map(([n,v,s]) => (
+            <tr key={n}>
+              <td><strong>{n}</strong></td>
+              <td className="vt-velthari">{v}</td>
+              <td className="vt-gloss">{s}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Lexicon() {
+  const [query, setQuery] = useState("");
+  const [pos, setPos] = useState("all");
+  const [showDerived, setShowDerived] = useState(false);
+
+  const cats = ["all","verb","noun","adj","particle","number"];
+
+  const allWords = useMemo(() => {
+    if (showDerived) return [...LEXICON, ...DERIVED_LEXICON];
+    return LEXICON;
+  }, [showDerived]);
+
+  const filtered = useMemo(() => {
+    return allWords.filter(e => {
+      const matchPos = pos === "all" || e.pos === pos;
+      const q = query.toLowerCase();
+      const matchQ = !q || e.word.includes(q) || e.def.toLowerCase().includes(q);
+      return matchPos && matchQ;
+    });
+  }, [allWords, pos, query]);
+
+  return (
+    <div>
+      <div className="vt-section-title">Lexi<em>con</em></div>
+      <p className="vt-section-desc">
+        {LEXICON.length} base words · {DERIVED_LEXICON.length} derived forms · {LEXICON.length + DERIVED_LEXICON.length} total
+      </p>
+
+      <div className="vt-lex-controls">
+        <input
+          className="vt-lexicon-search"
+          placeholder="Search by word or meaning…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+        />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div className="vt-lex-filters">
+            {cats.map(c => (
+              <button key={c} className={`vt-lex-filter${pos === c ? " active" : ""}`} onClick={() => setPos(c)}>
+                {c === "all" ? "All" : c === "adj" ? "Adjective" : c.charAt(0).toUpperCase() + c.slice(1)}
+              </button>
+            ))}
+            <button
+              className={`vt-lex-filter${showDerived ? " active" : ""}`}
+              onClick={() => setShowDerived(v => !v)}
+            >
+              {showDerived ? "Hide Derived" : "Show Derived"}
+            </button>
+          </div>
+          <span className="vt-lex-count">{filtered.length} result{filtered.length !== 1 ? "s" : ""}</span>
+        </div>
+      </div>
+
+      {filtered.length === 0 && (
+        <p className="vt-prose" style={{ fontStyle: "italic", color: "#4e3e24" }}>No words found.</p>
+      )}
+
+      <div className="vt-lex-grid">
+        {filtered.map((e, i) => (
+          <div key={e.word + i} className={`vt-lex-card${e.isDerived ? " derived" : ""}`}>
+            <div className="vt-lex-word">{e.word}</div>
+            <div className="vt-lex-pos">
+              <span style={{ color: POS_COLORS[e.pos] || "#4e3e24" }}>{e.pos}</span>
+              {e.isDerived && <span className="vt-derived-badge">{e.ruleId}</span>}
+            </div>
+            <div className="vt-lex-def">{e.def}</div>
+            {e.ipa && <div className="vt-lex-ipa">{e.ipa}</div>}
+            {e.isDerived && <div className="vt-derived-source">← from {e.derivedFrom}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "phonology", label: "Phonology" },
+  { id: "grammar", label: "Grammar" },
+  { id: "lexicon", label: "Lexicon" },
+];
+
+function App() {
+  const [tab, setTab] = useState("overview");
+  return (
+    <>
+      <style>{style}</style>
+      <div className="vt-root">
+        <div className="vt-noise" />
+        <header className="vt-hero">
+          <div className="vt-supertitle">A Constructed Language</div>
+          <div className="vt-title">Vel<em>thari</em></div>
+          <div className="vt-subtitle">The Silver Tongue of the Velthrin Sea-Scholars</div>
+          <div className="vt-ornament-line">✦ ✦ ✦</div>
+          <p className="vt-tagline">
+            "Ve-cha mi seval velthari." —<br />
+            I love the Velthari word.
+          </p>
+        </header>
+        <nav className="vt-nav">
+          {TABS.map(t => (
+            <button key={t.id} className={`vt-nav-btn${tab === t.id ? " active" : ""}`} onClick={() => setTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </nav>
+        <main className="vt-content">
+          {tab === "overview" && <Overview />}
+          {tab === "phonology" && <Phonology />}
+          {tab === "grammar" && <Grammar />}
+          {tab === "lexicon" && <Lexicon />}
+        </main>
+        <footer className="vt-footer">
+          Velthari Linguistic Reference · Second Edition · Compiled by the Velthrin Scribal Order
+        </footer>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
